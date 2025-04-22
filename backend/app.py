@@ -643,15 +643,15 @@ def generate_facture(idcom):
         pdf.set_font("Arial", size=12)
         
         # En-tête
-        pdf.cell(200, 10, txt="NOM DU RESTAURANT", ln=1, align='C')
-        pdf.cell(200, 10, txt=f"Code Commande : {commande['idcom']}", ln=1)
+        pdf.cell(200, 10, txt="MONJA - Resto", ln=1, align='C')
+        pdf.cell(200, 10, txt=f"Code Commande : {commande['idcom']}", ln=1, align='C')
         pdf.cell(200, 10, txt=f"Nom du Client : {commande['nomcli']}", ln=1)
         if commande['typecom'] == 'sur place':
             pdf.cell(200, 10, txt=f"Table : {commande.get('designation', 'Non assignée')}", ln=1)
         else:
             pdf.cell(200, 10, txt="À emporter", ln=1)
         pdf.cell(200, 10, txt=f"Date : {commande['datecom'].strftime('%d/%m/%Y %H:%M') if isinstance(commande['datecom'], datetime.datetime) else commande['datecom']}", ln=1)
-        pdf.cell(200, 10, txt="Votre facture en détail", ln=1)
+        pdf.cell(200, 10, txt="Votre facture en détail", ln=1, align='C')
         
         # Tableau des plats
         pdf.cell(60, 10, "Menu", 1)

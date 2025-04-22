@@ -147,25 +147,38 @@ const OrderComponent = ({
   };
 
   const onGenerateInvoice = async (id) => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      const response = await axios.get(`${API_URL}/commandes/${id}/facture`, {
+      // Tentative directe avec axios
+      const response = await axios.get(`${API_URL}/facture/${id}?download=true`, {
         responseType: 'blob'
       });
       
       // Créer un URL pour le PDF et l'ouvrir dans un nouvel onglet
-      const fileURL = window.URL.createObjectURL(new Blob([response.data]));
-      const fileLink = document.createElement('a');
-      fileLink.href = fileURL;
-      fileLink.setAttribute('download', `facture_${id}.pdf`);
-      document.body.appendChild(fileLink);
-      fileLink.click();
-      fileLink.remove();
+      // const fileURL = window.URL.createObjectURL(new Blob([response.data]));
+      // const fileLink = document.createElement('a');
+      // fileLink.href = fileURL;
+      // fileLink.setAttribute('download', `facture_${id}.pdf`);
+      // document.body.appendChild(fileLink);
+      // fileLink.click();
+      // fileLink.remove();
+
+       // Utiliser window.open() qui est plus fiable pour télécharger des fichiers
+      window.open(`${API_URL}/facture/${id}?download=true`, '_blank');
       
       toast.success('Facture générée avec succès');
     } catch (err) {
-      console.error('Erreur lors de la génération de la facture:', err);
-      toast.error(err.response?.data?.error || 'Erreur lors de la génération de la facture');
+      // Si une erreur se produit avec axios, on tente avec window.open comme fallback
+      console.log('Tentative de récupération directe de la facture...');
+      
+      try {
+        window.open(`${API_URL}/facture/${id}?download=true`, '_blank');
+        toast.success('Facture générée avec succès');
+      } catch (fallbackErr) {
+        console.error('Erreur lors de la génération de la facture:', err);
+        toast.error('Impossible de générer la facture');
+      }
     } finally {
       setLoading(false);
     }
