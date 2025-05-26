@@ -767,7 +767,7 @@ def handle_reservations():
             cursor.execute("""
                 SELECT COUNT(*) as conflicts 
                 FROM reserver 
-                WHERE idtable = %sAND (
+                WHERE idtable = %s AND (
                     (%s BETWEEN date_de_reserv AND date_reserve) OR
                     (%s BETWEEN date_de_reserv AND date_reserve) OR
                     (date_de_reserv BETWEEN %s AND %s)
@@ -855,7 +855,11 @@ def manage_reservation(idreserv):
             date_reserve = data.get('date_reserve')
             
             if date_de_reserv and not date_reserve:
-                date_obj = datetime.datetime.fromisoformat(date_de_reserv.replace('Z', '+00:00'))
+                try:
+                    date_obj = datetime.datetime.fromisoformat(date_de_reserv.replace('Z', '+00:00'))
+                except ValueError:
+                    return jsonify({'error': 'Format de date invalide'}), 400
+
                 date_reserve = (date_obj + datetime.timedelta(hours=2)).isoformat()
             
             # Vérification des conflits si les dates ou tables ont changé
@@ -978,22 +982,45 @@ def check_disponibilite():
         cursor.execute("SELECT * FROM restaurant_tables")
         tables = cursor.fetchall()
         
-        for table in tables:
-            # Vérifier si la table est occupée actuellement
-            cursor.execute("""
-                SELECT occupation FROM restaurant_tables
-                WHERE idtable = %s
-            """, (table['idtable'],))
-            table_status = cursor.fetchone()
-            table['est_occupee'] = table_status['occupation'] if table_status else False
+        # for table in tables:
+        #     # Vérifier si la table est occupée actuellement
+        #     cursor.execute("""
+        #         SELECT occupation FROM restaurant_tables
+        #         WHERE idtable = %s
+        #     """, (table['idtable'],))
+        #     table_status = cursor.fetchone()
+        #     table['est_occupee'] = table_status['occupation'] if table_status else False
             
-            # Vérifier si la table a des réservations pour la période
+        #     # Vérifier si la table a des réservations pour la période
+        #     cursor.execute("""
+        #         SELECT * FROM reserver
+        #         WHERE idtable = %s
+        #         AND (
+        #             (%s BETWEEN date_de_reserv AND date_reserve) OR
+        #             (%s BETWEEN date_de_reserv AND date_reserve) OR
+        #             (date_de_reserv BETWEEN %s AND %s)
+        #         )
+        #     """, (
+        #         table['idtable'],
+        #         date_debut,
+        #         date_fin,
+        #         date_debut,
+        #         date_fin
+        #     ))
+        #     reservations = cursor.fetchall()
+        #     table['reservations'] = reservations
+        #     table['est_disponible'] = not table['est_occupee'] and len(reservations) == 0
+
+        for table in tables:
+            # Vérifier s’il y a des réservations actives pour cette table à la date donnée
             cursor.execute("""
-                SELECT * FROM reserver
+                SELECT COUNT(*) as nb_reservations FROM reserver
                 WHERE idtable = %s
                 AND (
-                    (%s BETWEEN date_de_reserv AND date_reserve) OR
-                    (%s BETWEEN date_de_reserv AND date_reserve) OR
+                    (%s BETWEEN date_de_reserv AND date_reserve)
+                    OR
+                    (%s BETWEEN date_de_reserv AND date_reserve)
+                    OR
                     (date_de_reserv BETWEEN %s AND %s)
                 )
             """, (
@@ -1003,9 +1030,23 @@ def check_disponibilite():
                 date_debut,
                 date_fin
             ))
-            reservations = cursor.fetchall()
-            table['reservations'] = reservations
-            table['est_disponible'] = not table['est_occupee'] and len(reservations) == 0
+            nb_reservations = cursor.fetchone()['nb_reservations']
+
+            # Statut estimé selon les réservations
+            est_occupee = nb_reservations > 0
+
+            # Mise à jour du champ occupation dans restaurant_tables
+            cursor.execute("""
+                UPDATE restaurant_tables
+                SET occupation = %s
+                WHERE idtable = %s
+            """, (est_occupee, table['idtable']))
+
+            # Ajouter les infos à la réponse JSON
+            table['est_occupee'] = est_occupee
+            table['est_disponible'] = not est_occupee
+
+
         
         return jsonify(tables)
 

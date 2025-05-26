@@ -8,7 +8,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <Link to="/">Mon Application</Link>
+        <Link to="/">Application de Gestion</Link>
       </div>
       <div className="navbar-menu">
         {isAuthenticated ? (

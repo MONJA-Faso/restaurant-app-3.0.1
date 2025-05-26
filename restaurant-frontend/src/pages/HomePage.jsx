@@ -14,7 +14,7 @@ const HomePage = () => {
   return (
     <div className="home-container">
       <header className="home-header">
-        <h1>Bienvenue dans le Système de Gestion du Restaurant</h1>
+        <h1>Bienvenue dans le Système de Gestion</h1>
         <p>Bonjour {currentUser?.name}, prêt à gérer votre établissement efficacement ?</p>
       </header>
 
