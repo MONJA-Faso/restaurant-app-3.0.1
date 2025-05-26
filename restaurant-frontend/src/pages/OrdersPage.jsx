@@ -186,25 +186,33 @@ const OrderComponent = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+  
     // Validation
     if (formData.plats.some(plat => !plat.idplat)) {
       toast.error('Veuillez sélectionner un plat pour chaque ligne');
       return;
     }
-    
+  
     if (formData.typecom === 'sur place' && !formData.idtable) {
       toast.error('Veuillez sélectionner une table pour les commandes sur place');
       return;
     }
-
-    if (currentOrder) {
-      onUpdate(currentOrder.idcom, formData);
-    } else {
-      onAdd(formData);
+  
+    // Nettoyage de l'objet avant l’envoi
+    const cleanedData = { ...formData };
+    if (cleanedData.typecom !== 'sur place') {
+      delete cleanedData.idtable;
     }
+  
+    if (currentOrder) {
+      onUpdate(currentOrder.idcom, cleanedData);
+    } else {
+      onAdd(cleanedData);
+    }
+  
     setIsModalOpen(false);
   };
+  
 
   const openEditModal = (order) => {
     setCurrentOrder(order);
